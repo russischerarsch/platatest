@@ -48,3 +48,10 @@ func TestUpdatePrice_success(t *testing.T) {
 	assert.Equal(t, "completed", saved.Status)
 	assert.Equal(t, 1.1, *saved.Price)
 }
+
+func TestUpdatePrice_TooManyAttempts(t *testing.T) {
+	store := mocks.NewWorkerStore(t)
+	store.On("GetOldestPending", mock.Anything).Return(pendingQuote(3), nil)
+	store.On("UpdateStatus", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	updatePrices(t.Context(), store, http.DefaultClient, "key")
+}
