@@ -26,7 +26,7 @@ postman/curl
 ## План действий
 1. Открыть docker desktop
 2. В терминале вставить "git clone https://github.com/russischerarsch/platatest.git" для клонирования кода с репозитория на локальную машину
-3. Перейти в директорию "cd test"
+3. Перейти в директорию "cd platatest"
 4. Запустить код в контейнерах с помощью "docker-compose up --build"
 5. Проверить с помощью команды в терминале "docker ps" что запустилось 2 контейнера с кодом и Postgres.
 6. Открыть постман
