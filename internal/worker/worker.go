@@ -2,7 +2,6 @@ package worker
 
 import (
 	"PlataTest/internal/domain"
-	"PlataTest/internal/service"
 	"context"
 	"encoding/json"
 	"errors"
@@ -21,9 +20,18 @@ const (
 	failedSt        = "failed"
 )
 
+var apiBaseURL string = "http://api.exchangeratesapi.io"
+
+type workerStore interface {
+	GetOldestPending(ctx context.Context) (*domain.Quote, error)
+	IncrementAttempts(ctx context.Context, id int64) error
+	UpdateQuote(ctx context.Context, q *domain.Quote) error
+	UpdateStatus(ctx context.Context, id int64, status string) error
+}
+
 func RunPriceUpdater(
 	ctx context.Context,
-	repository service.Repository,
+	repository workerStore,
 	client *http.Client,
 	apiKey string,
 ) error {
@@ -42,7 +50,7 @@ func RunPriceUpdater(
 
 func updatePrices(
 	ctx context.Context,
-	repository service.Repository,
+	repository workerStore,
 	client *http.Client,
 	apiKey string,
 ) {
@@ -87,7 +95,7 @@ func updatePrices(
 
 func updateQuote(
 	ctx context.Context,
-	repository service.Repository,
+	repository workerStore,
 	client *http.Client,
 	apiKey string,
 	q *domain.Quote,
@@ -104,8 +112,8 @@ func updateQuote(
 	}
 
 	URL := fmt.Sprintf(
-		"http://api.exchangeratesapi.io/v1/latest?access_key=%s&base=%s&symbols=%s",
-		apiKey, q.Pair[:3], q.Pair[3:],
+		"%s/v1/latest?access_key=%s&base=%s&symbols=%s",
+		apiBaseURL, apiKey, q.Pair[:3], q.Pair[3:],
 	)
 
 	req, err := http.NewRequestWithContext(childCtx, http.MethodGet, URL, nil)
@@ -169,7 +177,7 @@ func updateQuote(
 	return nil
 }
 
-func markFailed(ctx context.Context, repository service.Repository, id int64) error {
+func markFailed(ctx context.Context, repository workerStore, id int64) error {
 	if err := repository.UpdateStatus(ctx, id, failedSt); err != nil {
 		return err
 	}

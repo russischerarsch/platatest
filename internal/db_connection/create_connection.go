@@ -40,5 +40,5 @@ func NewPool(ctx context.Context, dsn string) (*pgxpool.Pool, error) {
 		}
 	}
 	pool.Close()
-	return nil, fmt.Errorf("connect to postgres after %d attempts, err %w", maxAttempts, err)
+	return nil, fmt.Errorf("connect to postgres after %d attempts: %w", maxAttempts, err)
 }

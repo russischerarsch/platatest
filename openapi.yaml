@@ -1,0 +1,175 @@
+openapi: 3.0.3
+info:
+  title: Currency Quotes API
+  description: >
+    Сервис котировок валютных пар. Пользователь создаёт пару, после чего
+    фоновый воркер раз в 10 секунд запрашивает курс у внешнего API и
+    обновляет котировку.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080
+
+paths:
+  /api/quotes:
+    post:
+      summary: Создать котировку для пары
+      description: >
+        Создаёт запись со статусом pending и возвращает её идентификатор.
+        Цена будет обновлена в фоне, поэтому сразу после создания она null.
+      operationId: createQuote
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateQuoteRequest"
+      responses:
+        "201":
+          description: Запись создана
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateQuoteResponse"
+        "400":
+          description: Неверное тело запроса или формат пары
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Такая пара уже существует
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Внутренняя ошибка
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/quotes/{id}:
+    get:
+      summary: Получить котировку по идентификатору
+      operationId: getQuoteByID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+            example: 1
+      responses:
+        "200":
+          description: Котировка найдена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Quote"
+        "400":
+          description: Некорректный идентификатор
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Котировка не найдена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Внутренняя ошибка
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/quotes/latest:
+    get:
+      summary: Получить последнее значение котировки по паре
+      operationId: getLatestQuote
+      parameters:
+        - name: pair
+          in: query
+          required: true
+          description: Код пары из шести букв, например EURUSD
+          schema:
+            type: string
+            example: EURUSD
+      responses:
+        "200":
+          description: Котировка найдена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Quote"
+        "400":
+          description: Пустой параметр pair или неверный формат
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Котировка не найдена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Внутренняя ошибка
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+components:
+  schemas:
+    CreateQuoteRequest:
+      type: object
+      required: [pair]
+      properties:
+        pair:
+          type: string
+          description: Код валютной пары из шести букв
+          example: EURUSD
+
+    CreateQuoteResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+
+    Quote:
+      type: object
+      properties:
+        pair:
+          type: string
+          example: EURRUB
+        price:
+          type: number
+          format: double
+          nullable: true
+          description: Цена; null, пока котировка в статусе pending
+          example: 89.96907
+        updated_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2026-11-21T09:33:11.465329Z"
+        status:
+          type: string
+          enum: [pending, completed, failed]
+          example: completed
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          example: quote not found
