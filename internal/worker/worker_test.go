@@ -59,7 +59,7 @@ func TestUpdatePrice_apiBadRequest(t *testing.T) {
 	setupAPI(t, http.StatusBadRequest, "")
 	store := mocks.NewWorkerStore(t)
 	store.On("GetOldestPending", mock.Anything).Return(pendingQuote(1), nil)
-	store.On("UpdateStatus", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	store.On("UpdateStatus", mock.Anything, int64(1), failedSt).Return(nil)
 	store.On("IncrementAttempts", mock.Anything, mock.Anything).Return(nil)
 	updatePrices(t.Context(), store, http.DefaultClient, "key")
 }
@@ -81,7 +81,7 @@ func TestUpdatePrice_storageErr(t *testing.T) {
 	updatePrices(t.Context(), store, http.DefaultClient, "key")
 }
 
-func TestUpdatePrice_apiNotAvailable(t *testing.T) {
+func TestUpdateQuote_apiNotAvailable(t *testing.T) {
 	old := apiBaseURL
 	apiBaseURL = "http://127.0.0.1:1"
 	defer func() { apiBaseURL = old }()
