@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func setupAPI(t *testing.T, status int, body string) *httptest.Server {
+func setupAPI(t *testing.T, status int, body string) {
 	t.Helper()
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(status)
@@ -24,7 +24,6 @@ func setupAPI(t *testing.T, status int, body string) *httptest.Server {
 		srv.Close()
 		apiBaseURL = old
 	})
-	return srv
 }
 
 func pendingQuote(attempt int) *domain.Quote {
@@ -33,15 +32,15 @@ func pendingQuote(attempt int) *domain.Quote {
 
 func TestUpdatePrice_success(t *testing.T) {
 	setupAPI(t, http.StatusOK, `{"success":true,"rates":{"USD":1.1}}`)
-	m := mocks.NewWorkerStore(t)
+	store := mocks.NewWorkerStore(t)
 	var saved *domain.Quote
 
-	m.On("GetOldestPending", mock.Anything).Return(pendingQuote(0), nil)
-	m.On("UpdateQuote", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+	store.On("GetOldestPending", mock.Anything).Return(pendingQuote(0), nil)
+	store.On("UpdateQuote", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
 		saved = args.Get(1).(*domain.Quote)
 	}).Return(nil)
 
-	updatePrices(t.Context(), m, http.DefaultClient, "key")
+	updatePrices(t.Context(), store, http.DefaultClient, "key")
 
 	require.NotNil(t, saved)
 	assert.Equal(t, int64(1), saved.ID)
@@ -49,9 +48,46 @@ func TestUpdatePrice_success(t *testing.T) {
 	assert.Equal(t, 1.1, *saved.Price)
 }
 
-func TestUpdatePrice_TooManyAttempts(t *testing.T) {
+func TestUpdatePrice_tooManyAttempts(t *testing.T) {
 	store := mocks.NewWorkerStore(t)
 	store.On("GetOldestPending", mock.Anything).Return(pendingQuote(3), nil)
-	store.On("UpdateStatus", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	store.On("UpdateStatus", mock.Anything, int64(1), failedSt).Return(nil)
 	updatePrices(t.Context(), store, http.DefaultClient, "key")
+}
+
+func TestUpdatePrice_apiBadRequest(t *testing.T) {
+	setupAPI(t, http.StatusBadRequest, "")
+	store := mocks.NewWorkerStore(t)
+	store.On("GetOldestPending", mock.Anything).Return(pendingQuote(1), nil)
+	store.On("UpdateStatus", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	store.On("IncrementAttempts", mock.Anything, mock.Anything).Return(nil)
+	updatePrices(t.Context(), store, http.DefaultClient, "key")
+}
+
+func TestUpdateQuote_unauthorized(t *testing.T) {
+	setupAPI(t, http.StatusUnauthorized, "")
+	store := mocks.NewWorkerStore(t)
+	err := updateQuote(t.Context(), store, http.DefaultClient, "", pendingQuote(1))
+
+	require.ErrorIs(t, err, domain.ErrDeniedAPI)
+
+}
+
+func TestUpdatePrice_storageErr(t *testing.T) {
+	setupAPI(t, http.StatusOK, `{"success":true,"rates":{"USD":1.1}}`)
+	store := mocks.NewWorkerStore(t)
+	store.On("GetOldestPending", mock.Anything).Return(pendingQuote(1), nil)
+	store.On("UpdateQuote", mock.Anything, mock.Anything).Return(domain.ErrStorage)
+	updatePrices(t.Context(), store, http.DefaultClient, "key")
+}
+
+func TestUpdatePrice_apiNotAvailable(t *testing.T) {
+	old := apiBaseURL
+	apiBaseURL = "http://127.0.0.1:1"
+	defer func() { apiBaseURL = old }()
+	store := mocks.NewWorkerStore(t)
+
+	err := updateQuote(t.Context(), store, http.DefaultClient, "key", pendingQuote(1))
+
+	require.ErrorIs(t, err, domain.ErrAPINotAvailable)
 }

@@ -18,6 +18,7 @@ const (
 	maxAttempts     = 3
 	validPairLength = 6
 	failedSt        = "failed"
+	completedSt     = "completed"
 )
 
 var apiBaseURL string = "http://api.exchangeratesapi.io"
@@ -77,7 +78,7 @@ func updatePrices(
 		return
 	}
 	if err := updateQuote(ctx, repository, client, apiKey, quote); err != nil {
-		if errors.Is(err, domain.ErrDeniedAPI) {
+		if errors.Is(err, domain.ErrDeniedAPI) || errors.Is(err, domain.ErrAPINotAvailable) {
 			log.Printf("api: %v", err)
 			return
 		}
@@ -166,7 +167,7 @@ func updateQuote(
 			Pair:      currency,
 			Price:     &value,
 			UpdatedAt: &now,
-			Status:    "completed",
+			Status:    completedSt,
 		}
 	}
 	childCtx, cancel = context.WithTimeout(ctx, dbTimeout)
