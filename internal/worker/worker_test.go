@@ -12,24 +12,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func setupAPI(t *testing.T, status int, body string) {
-	t.Helper()
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(status)
-		w.Write([]byte(body))
-	}))
-	old := apiBaseURL
-	apiBaseURL = srv.URL
-	t.Cleanup(func() {
-		srv.Close()
-		apiBaseURL = old
-	})
-}
-
-func pendingQuote(attempt int) *domain.Quote {
-	return &domain.Quote{ID: 1, Pair: "eurusd", Attempt: attempt}
-}
-
 func TestUpdatePrice_success(t *testing.T) {
 	setupAPI(t, http.StatusOK, `{"success":true,"rates":{"USD":1.1}}`)
 	store := mocks.NewWorkerStore(t)
@@ -90,4 +72,22 @@ func TestUpdateQuote_apiNotAvailable(t *testing.T) {
 	err := updateQuote(t.Context(), store, http.DefaultClient, "key", pendingQuote(1))
 
 	require.ErrorIs(t, err, domain.ErrAPINotAvailable)
+}
+
+func setupAPI(t *testing.T, status int, body string) {
+	t.Helper()
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(status)
+		w.Write([]byte(body))
+	}))
+	old := apiBaseURL
+	apiBaseURL = srv.URL
+	t.Cleanup(func() {
+		srv.Close()
+		apiBaseURL = old
+	})
+}
+
+func pendingQuote(attempt int) *domain.Quote {
+	return &domain.Quote{ID: 1, Pair: "eurusd", Attempt: attempt}
 }
