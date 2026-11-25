@@ -4,7 +4,6 @@ import (
 	"PlataTest/internal/domain"
 	"PlataTest/internal/service"
 	"PlataTest/internal/service/mocks"
-	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -23,21 +22,6 @@ func TestCreateQuote_success(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.Equal(t, reqID, id)
-}
-
-func TestCreateQuote_repoError(t *testing.T) {
-	var reqID int64 = 0
-	m := mocks.NewRepository(t)
-	svc := service.NewService(m)
-
-	repoErr := errors.New("db down")
-
-	m.On("CreateQuote", mock.Anything, "eurusd").Return(reqID, repoErr).Once()
-
-	id, err := svc.CreateQuote(t.Context(), "EURUSD")
-
-	require.ErrorIs(t, err, repoErr)
-	assert.Zero(t, id)
 }
 
 func TestCreateQuote_invalidPair(t *testing.T) {

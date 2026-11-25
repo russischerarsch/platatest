@@ -28,19 +28,20 @@ func TestCreateQuote_success(t *testing.T) {
 		"/api/quotes",
 		bytes.NewBuffer(data),
 	)
+	req.Header.Set("Content-Type", "application/json")
 	rec := httptest.NewRecorder()
-	rec.Header().Set("Content-Type", "application/json")
 	mux := http.NewServeMux()
 	svc := mocks.NewService(t)
-	svc.On("CreateQuote", mock.Anything, mock.Anything).Once().Return(int64(1), nil)
+	svc.On("CreateQuote", mock.Anything, "EURUSD").Return(int64(1), nil)
 	h := transport.NewHandler(svc)
 	mux.HandleFunc("POST /api/quotes", h.CreateQuote)
 
 	mux.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusCreated, rec.Code)
+	require.Equal(t, "application/json", rec.Header().Get("Content-Type"))
 	var id transport.СreateQuoteResponse
 	err = json.NewDecoder(rec.Body).Decode(&id)
 	require.NoError(t, err)
-	assert.Equal(t, http.StatusCreated, rec.Result().StatusCode)
 	assert.Equal(t, int64(1), id.ID)
 }
 
@@ -62,12 +63,15 @@ func TestGetQuoteByID_success(t *testing.T) {
 	mux.HandleFunc("GET /api/quotes/{id}", h.GetByID)
 
 	mux.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusCreated, rec.Code)
+	require.Equal(t, "application/json", rec.Header().Get("Content-Type"))
+
 	var resp struct {
 		Pair string `json:"pair"`
 	}
 	err := json.NewDecoder(rec.Body).Decode(&resp)
 	require.NoError(t, err)
-	assert.Equal(t, resp.Pair, "EURUSD")
+	assert.Equal(t, "EURUSD", resp.Pair)
 }
 func TestGetLatestQuote_success(t *testing.T) {
 	req := httptest.NewRequest(
@@ -87,6 +91,8 @@ func TestGetLatestQuote_success(t *testing.T) {
 	mux.HandleFunc("GET /api/quotes/latest", h.GetQuoteByPair)
 
 	mux.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusCreated, rec.Code)
+	require.Equal(t, "application/json", rec.Header().Get("Content-Type"))
 	var resp struct {
 		Pair string `json:"pair"`
 	}

@@ -12,7 +12,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-const UniqueViolation = "23505"
+const UniqueViolation = "23505" // duplicate error number
 
 type Repository struct {
 	pool *pgxpool.Pool
@@ -33,7 +33,7 @@ func (r *Repository) CreateQuote(ctx context.Context, pair string) (int64, error
 	err := r.pool.QueryRow(ctx, query, pair, time.Now()).Scan(&id)
 	var pgError *pgconn.PgError
 	if err != nil {
-		if errors.As(err, &pgError) && pgError.Code == UniqueViolation { // номер ошибки дубликата
+		if errors.As(err, &pgError) && pgError.Code == UniqueViolation {
 			return 0, fmt.Errorf("create quote pair: %s:  %w", pair, domain.ErrAlreadyExists)
 		}
 		return id, fmt.Errorf("create quote: %w", err)
