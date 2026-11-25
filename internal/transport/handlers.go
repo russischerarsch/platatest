@@ -21,7 +21,7 @@ type Service interface {
 type Handlers struct {
 	service Service
 }
-type СreateQuoteResponse struct {
+type CreateQuoteResponse struct {
 	ID int64 `json:"id"`
 }
 
