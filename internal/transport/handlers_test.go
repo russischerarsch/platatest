@@ -63,7 +63,7 @@ func TestGetQuoteByID_success(t *testing.T) {
 	mux.HandleFunc("GET /api/quotes/{id}", h.GetByID)
 
 	mux.ServeHTTP(rec, req)
-	require.Equal(t, http.StatusCreated, rec.Code)
+	require.Equal(t, http.StatusOK, rec.Code)
 
 	var resp struct {
 		Pair string `json:"pair"`
@@ -90,7 +90,7 @@ func TestGetLatestQuote_success(t *testing.T) {
 	mux.HandleFunc("GET /api/quotes/latest", h.GetQuoteByPair)
 
 	mux.ServeHTTP(rec, req)
-	require.Equal(t, http.StatusCreated, rec.Code)
+	require.Equal(t, http.StatusOK, rec.Code)
 
 	var resp struct {
 		Pair string `json:"pair"`
