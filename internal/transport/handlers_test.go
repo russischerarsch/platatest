@@ -54,7 +54,7 @@ func TestGetQuoteByID_success(t *testing.T) {
 	rec := httptest.NewRecorder()
 
 	svc := mocks.NewService(t)
-	svc.On("GetQuoteByID", mock.Anything, int64(1)).Return(&domain.Quote{Pair: "EURUSD"}, nil).Once()
+	svc.On("GetQuoteByID", mock.Anything, int64(1)).Return(&domain.Quote{Pair: "EURUSD"}, nil)
 
 	h := transport.NewHandler(svc)
 
@@ -81,7 +81,7 @@ func TestGetLatestQuote_success(t *testing.T) {
 	rec := httptest.NewRecorder()
 
 	svc := mocks.NewService(t)
-	svc.On("GetQuoteByPair", mock.Anything, "EURUSD").Return(&domain.Quote{Pair: "EURUSD"}, nil).Once()
+	svc.On("GetQuoteByPair", mock.Anything, "EURUSD").Return(&domain.Quote{Pair: "EURUSD"}, nil)
 
 	h := transport.NewHandler(svc)
 
