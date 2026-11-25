@@ -39,7 +39,7 @@ func TestCreateQuote_success(t *testing.T) {
 	mux.ServeHTTP(rec, req)
 	require.Equal(t, http.StatusCreated, rec.Code)
 	require.Equal(t, "application/json", rec.Header().Get("Content-Type"))
-	var id transport.СreateQuoteResponse
+	var id transport.CreateQuoteResponse
 	err = json.NewDecoder(rec.Body).Decode(&id)
 	require.NoError(t, err)
 	assert.Equal(t, int64(1), id.ID)

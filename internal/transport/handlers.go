@@ -55,7 +55,7 @@ func (h *Handlers) CreateQuote(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, http.StatusCreated, СreateQuoteResponse{ID: id})
+	writeJSON(w, http.StatusCreated, CreateQuoteResponse{ID: id})
 }
 
 func (h *Handlers) GetByID(w http.ResponseWriter, r *http.Request) {
