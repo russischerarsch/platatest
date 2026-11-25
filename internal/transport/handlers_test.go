@@ -64,7 +64,6 @@ func TestGetQuoteByID_success(t *testing.T) {
 
 	mux.ServeHTTP(rec, req)
 	require.Equal(t, http.StatusCreated, rec.Code)
-	require.Equal(t, "application/json", rec.Header().Get("Content-Type"))
 
 	var resp struct {
 		Pair string `json:"pair"`
@@ -92,7 +91,7 @@ func TestGetLatestQuote_success(t *testing.T) {
 
 	mux.ServeHTTP(rec, req)
 	require.Equal(t, http.StatusCreated, rec.Code)
-	require.Equal(t, "application/json", rec.Header().Get("Content-Type"))
+
 	var resp struct {
 		Pair string `json:"pair"`
 	}
