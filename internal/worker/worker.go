@@ -161,10 +161,10 @@ func updateQuote(
 
 	now := time.Now()
 	var rate domain.Quote
-	for currency, value := range response.Rates {
+	for _, value := range response.Rates {
 		rate = domain.Quote{
 			ID:        q.ID,
-			Pair:      currency,
+			Pair:      q.Pair,
 			Price:     &value,
 			UpdatedAt: &now,
 			Status:    completedSt,

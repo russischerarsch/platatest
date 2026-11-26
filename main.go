@@ -86,6 +86,7 @@ func main() {
 		log.Print("server is ready to accept conns")
 		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Printf("listen and serve: %v", err)
+			stop()
 		}
 	}()
 
