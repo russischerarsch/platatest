@@ -46,7 +46,8 @@ func (h *Handlers) CreateQuote(w http.ResponseWriter, r *http.Request) {
 		if errors.Is(err, domain.ErrInvalidPairFormat) {
 			writeJSONError(w, http.StatusBadRequest, "invalid format")
 			return
-		} else if errors.Is(err, domain.ErrAlreadyExists) {
+		}
+		if errors.Is(err, domain.ErrAlreadyExists) {
 			writeJSONError(w, http.StatusConflict, "pair already exists")
 			return
 		}
